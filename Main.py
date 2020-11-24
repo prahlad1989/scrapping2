@@ -27,7 +27,11 @@ from xlwt import Workbook
 # pip install Pillow
 import PIL.Image
 
+import DataBaseUtils
 from ScrapData import ScrapData
+
+
+
 
 
 def main(args):
@@ -53,6 +57,47 @@ def main(args):
     pageUrl = None
     lastPageNum =None
 
+    def actionForEachArticle(allArticleUrls, category):
+        allArticles = []
+        for i in range(len(allArticleUrls)):
+            url = allArticleUrls[i]
+            driver.get(url)
+            time.sleep(0.2)
+            sdata = ScrapData()
+            sdata.url = url
+            sdata.description = driver.find_element_by_class_name("c-page__heading").text
+            expertsEstimate = driver.find_elements_by_xpath("//div//*[contains(text(),'s estimate')]")
+            if expertsEstimate:
+                sdata.expert_estimate = expertsEstimate[0].text.split('estimate')[1].strip()
+
+            currentBid = driver.find_elements_by_xpath("//div//*[contains(text(),'Current bid')]")
+            if currentBid:
+                sdata.current_bid =  currentBid[0].text.replace("Current bid ","")
+
+            picture = driver.find_elements_by_xpath("//div[@class='be-lot-image-gallery__image']/img")[0].get_attribute("src")
+
+            winningBid = driver.find_elements_by_xpath("//div[@class='lot-closed-banner__lot-winning-bid']")
+            if winningBid:
+                sdata.winning_bid = winningBid[0].text.replace("Winning Bid: ")
+
+            folderName = "databases/categories/images"
+            if not os.path.exists(folderName):
+                # create the folder
+                os.makedirs(folderName)
+
+            # change diretory
+            os.chdir(folderName)
+            pictureExt = sdata.picture.split(".")[-1]
+            sdata.image_path = "{0}.{1}".format(i+1,pictureExt)
+            urllib.request.urlretrieve(sdata.picture, sdata.image_path)
+            DataBaseUtils.update(sdata)
+
+
+
+
+
+
+    actionForEachArticle(['https://www.catawiki.com/l/42536249-jack-daniel-s-maxwell-house-original-bottling-b-1990s-150cl'],'whisky')
 
     def eachPageAction(url):
         driver.get(url)
@@ -60,9 +105,6 @@ def main(args):
         articleThumbNails = driver.find_elements_by_xpath("//div//article[@class='c-lot-card__container']/a")
         articleUrls = map(lambda  x:x.get_attribute("href"),articleThumbNails)
         allArticleUrls.extend(articleUrls)
-
-
-
 
 
 
@@ -92,39 +134,12 @@ def main(args):
 
 
 
+
+
+
+
     # find div with pageresults   #Displaying results 1-25 (of 546)
-    pageResult = driver.find_element_by_class_name("PagerResults").text
-    pageSizeInfo = re.findall("\s\d-\d+\s", pageResult)[0].strip()
-    print("page size info {0}".format(pageSizeInfo))
-    pageSize = pageSizeInfo.split("-")  # 1-25  --> 25
-    pageSize = int(pageSize[1])
 
-    totalRecords = int(re.findall("of\s(\d+)", pageResult)[0].strip())
-    print("totalRecords {0}".format(totalRecords))
-
-    numOfPages = int(totalRecords / pageSize)
-    if (totalRecords % pageSize != 0):
-        numOfPages += 1
-    time.sleep(0.2)
-    queryURL = "https://www.seca.ch/Membership/Members.aspx?page={0}"
-    allRows = list()
-    for pageNum in range(1, 1 + 1):
-        print("page number is{0}".format(pageNum))
-        driver.get(queryURL.format(pageNum))
-        time.sleep(0.2)
-        items = driver.find_elements_by_class_name("default_list_member_item")
-        pageLinks = list(map(lambda x: x.find_element_by_tag_name("a").get_attribute("href"), items))
-        for eachPageLink in pageLinks:
-            driver.get(eachPageLink)
-            time.sleep(0.2)
-            eachRowDict = OrderedDict()
-            eachRowDict['Name'] = driver.find_elements_by_xpath("//div[@class='content_middle']/h1/p")[0].text
-            eachRowDict['Street'] = \
-            driver.find_elements_by_xpath("//div[@class='content_left']/div[@class='tabs']//table//td")[0].text.split(
-                "\n")[0]
-            allRows.append(eachRowDict)
-
-    print(pageResultDiv)
 
 
 

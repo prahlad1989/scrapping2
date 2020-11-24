@@ -5,7 +5,7 @@ class ScrapData:
     description = None
     expert_estimate = None
     current_bid = None
-    picture = None
+    image_location = None
     winning_bid = None
 
     def __init__(self, **kwargs):
