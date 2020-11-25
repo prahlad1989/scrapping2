@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from datetime import datetime, timedelta, date, timezone
 
@@ -13,7 +14,6 @@ sql_create_scrap_data = """CREATE TABLE IF NOT EXISTS ScrapData (
                                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP  
                                    
                                );"""
-
 
 def createTable(sql_create_scrap_data, conn):
     try:
@@ -31,7 +31,7 @@ def createConnection(dbName):
     conn = None
     try:
         conn = sqlite3.connect(db_file)
-        print(conn)
+        logging.info(conn)
     except sqlite3.Error as e:
         print(e)
     return conn
@@ -41,9 +41,12 @@ if __name__ == "__main__":
     try:
         conn = createConnection("goodCat")
         createTable(sql_create_scrap_data, conn)
-        insertRowStmt = """ insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values('ddddd', 'descirtpion1', '100', '{0}') """.format(str(datetime.now()))
+        insertRow = "insert into ScrapData(url,description) values({0},{1})".format('abcde','efgh')
+        insertRow=''' INSERT INTO ScrapData(url,description)
+                      VALUES(?,?) '''
+        insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
         c= conn.cursor()
-        c.execute(insertRowStmt)
+        c.execute(insertRow,('accxxc','sdddd','2','3','3',None,datetime.now()))
         c.close()
         conn.commit()
         conn.close()
@@ -51,8 +54,32 @@ if __name__ == "__main__":
         print(e)
 
 def update(category, sdata):
-    conn = createConnection(category)
-    createTable(sql_create_scrap_data, conn)
-    #check if the row exists already. if not , create a row.
-    insertRowStmt = """ insert into ScrapData(url, description, expert_estimate , updated_at ) values('ddddd', 'descirtpion1', '100', '{0}') """.format(
-        str(datetime.now()))
+    try:
+        conn = createConnection(category)
+        createTable(sql_create_scrap_data, conn)
+        #print(sdata)
+
+        #check if the row exists already. if not , create a row.
+        selectRow =''' select id from ScrapData where url =? '''
+        cur = conn.cursor()
+        cur.execute(selectRow,(sdata.url,))
+        records = cur.fetchall()
+        if(len(records)>0): # record already exists so,
+            id = records[0][0]
+            updateRow = ''' update ScrapData set winning_bid=?, image_location=? where id=?'''
+            cur = conn.cursor()
+            cur.execute(updateRow,(sdata.winning_bid, sdata.image_location, id))
+            cur.close()
+        else:
+
+            insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
+
+            cur = conn.cursor()
+            cur.execute(insertRow,(sdata.url, sdata.description, sdata.expert_estimate,sdata.current_bid, sdata.winning_bid, sdata.image_location, str(datetime.now())))
+            cur.close()
+
+    except sqlite3.Error as e:
+        print(e)
+    finally:
+        conn.commit()
+        conn.close()

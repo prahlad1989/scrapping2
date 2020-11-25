@@ -1,6 +1,12 @@
 import sys
 # python dependencies
 # these dont need any installation
+import logging
+
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+
 # os is used for doing directory operations
 import os
 # sys is used for retrieving arguments from the terminal
@@ -13,101 +19,91 @@ import string
 import argparse
 # pip install urllib3
 import urllib.request
-# pip install selenium
-from collections import OrderedDict
 
+
+
+# pip install selenium
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver import ActionChains
-import re
-import xlwt
-from xlwt import Workbook
-
-# pip install Pillow
-import PIL.Image
-
 import DataBaseUtils
 from ScrapData import ScrapData
 
 
 
 
-
 def main(args):
-    print("great {0}".format(args))
-    #queryURL = args[0]
-    queryURL = "https://www.catawiki.com/c/437-whisky"
+    queryURL = args[0]
+    #queryURL = "https://www.catawiki.com/c/873-automobilia-motobilia"
     #queryURL = "https://www.catawiki.com/c/437-whisky/927-area/107557-western-highlands/"
     # open a new google chrome window
     driver = webdriver.Chrome()
-
     driver.set_window_size(1200, 800)
 
     driver.get(queryURL)
+    logging.info("url to scrap {0}".format(queryURL))
 
     # wait for loading
-    time.sleep(1.0)
+    time.sleep(0.2)
 
     # find div with page related classes
     driver.find_element_by_id("cookie_bar_agree_button").click()
-    time.sleep(2.0)
+    time.sleep(0.2)
     allArticleUrls = []
 
     pageUrl = None
     lastPageNum =None
+    category = queryURL.split("/")[-1]
 
     def actionForEachArticle(allArticleUrls, category):
         allArticles = []
-        for i in range(len(allArticleUrls)):
-            url = allArticleUrls[i]
-            driver.get(url)
-            time.sleep(0.2)
-            sdata = ScrapData()
-            sdata.url = url
-            sdata.description = driver.find_element_by_class_name("c-page__heading").text
-            expertsEstimate = driver.find_elements_by_xpath("//div//*[contains(text(),'s estimate')]")
-            if expertsEstimate:
-                sdata.expert_estimate = expertsEstimate[0].text.split('estimate')[1].strip()
+        for i in range(len(allArticleUrls)):# coz numbering the image with i+1 .
+            try:
+                logging.info("for article {0}".format(url))
+                url = allArticleUrls[i]
+                driver.get(url)
+                time.sleep(0.2)
+                sdata = ScrapData()
+                sdata.url = url
+                sdata.description = driver.find_element_by_class_name("c-page__heading").text
+                expertsEstimate = driver.find_elements_by_xpath("//div//*[contains(text(),'s estimate')]")
+                if expertsEstimate:
+                    sdata.expert_estimate = expertsEstimate[0].text.split('estimate')[1].strip()
 
-            currentBid = driver.find_elements_by_xpath("//div//*[contains(text(),'Current bid')]")
-            if currentBid:
-                sdata.current_bid =  currentBid[0].text.replace("Current bid ","")
+                currentBid = driver.find_elements_by_xpath("//div[@class='be-lot-current-bid']//div//*[contains(text(),'Current bid ')]")
+                if currentBid:
+                    sdata.current_bid =  currentBid[0].text.replace("Current bid ","")
 
-            picture = driver.find_elements_by_xpath("//div[@class='be-lot-image-gallery__image']/img")[0].get_attribute("src")
+                picture = driver.find_elements_by_xpath("//div[@class='be-lot-image-gallery__image']/img")[0].get_attribute("src")
 
-            winningBid = driver.find_elements_by_xpath("//div[@class='lot-closed-banner__lot-winning-bid']")
-            if winningBid:
-                sdata.winning_bid = winningBid[0].text.replace("Winning Bid: ")
+                winningBid = driver.find_elements_by_xpath("//div[@class='lot-closed-banner__lot-winning-bid']")
+                if winningBid:
+                    sdata.winning_bid = winningBid[0].text.replace("Winning Bid:","")
 
-            folderName = "databases/categories/images"
-            if not os.path.exists(folderName):
-                # create the folder
-                os.makedirs(folderName)
-
-            # change diretory
-            os.chdir(folderName)
-            pictureExt = sdata.picture.split(".")[-1]
-            sdata.image_path = "{0}.{1}".format(i+1,pictureExt)
-            urllib.request.urlretrieve(sdata.picture, sdata.image_path)
-            DataBaseUtils.update(sdata)
+                folderName = "databases/categories/{0}/images".format(category)
+                if not os.path.exists(folderName):
+                    # create the folder
+                    os.makedirs(folderName)
 
 
+                pictureExt = picture.split(".")[-1]
+                pictureName = url.split("/")[-1]
+                sdata.image_location = folderName+"/{0}.{1}".format(pictureName,pictureExt)
+                urllib.request.urlretrieve(picture, sdata.image_location)
+                DataBaseUtils.update(category, sdata)
+            except Exception as e:
+                logging.error(e)
 
 
-
-
-    actionForEachArticle(['https://www.catawiki.com/l/42536249-jack-daniel-s-maxwell-house-original-bottling-b-1990s-150cl'],'whisky')
+    #actionForEachArticle(['https://www.catawiki.com/l/42641557-bruichladdich-1991-wmdii-yellow-submarine-lost-found-original-bottling-70cl'], 'dummy')
 
     def eachPageAction(url):
         driver.get(url)
         time.sleep(0.2)
         articleThumbNails = driver.find_elements_by_xpath("//div//article[@class='c-lot-card__container']/a")
         articleUrls = map(lambda  x:x.get_attribute("href"),articleThumbNails)
-        allArticleUrls.extend(articleUrls)
+        return articleUrls
 
-
-
+    #
     try:
         pageResultDiv = driver.find_element_by_class_name("pages")
         lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
@@ -115,33 +111,23 @@ def main(args):
         lastPageUrl = str(lastPage.get_attribute("href"))
 
         pageNum = lastPageUrl.rfind(lastPageNum)
-        pageUrl = lastPageUrl[0:pageNum]
+        pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
         lastPageNum=int(lastPageNum)
+        #testing
+        #lastPageNum=2 #testing.
+
         for i in range(1,lastPageNum+1):
             eachPageUrl = pageUrl+str(i)
-            eachPageAction(eachPageUrl)
-
+            articleUrls = eachPageAction(eachPageUrl)
+            allArticleUrls.extend(articleUrls)
 
 
     except NoSuchElementException as e:
-        print(e)
-        eachPageAction(queryURL)
-
-
-
-
-
-
-
-
-
-
-
-
-    # find div with pageresults   #Displaying results 1-25 (of 546)
-
-
-
+        logging.error(e)
+        articleUrls = eachPageAction(queryURL)
+        allArticleUrls.extend(articleUrls)
+    actionForEachArticle(allArticleUrls, category)
+    driver.close()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,4 @@
+chromedriver-py==87.0.4280.20
+selenium==3.141.0
+urllib3==1.26.2
+
