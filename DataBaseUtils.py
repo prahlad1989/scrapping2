@@ -65,15 +65,10 @@ def update(category, sdata):
         cur.execute(selectRow,(sdata.url,))
         records = cur.fetchall()
         if(len(records)>0): # record already exists so,
-            id = records[0][0]
-            updateRow = ''' update ScrapData set winning_bid=?, image_location=? where id=?'''
-            cur = conn.cursor()
-            cur.execute(updateRow,(sdata.winning_bid, sdata.image_location, id))
-            cur.close()
+            pass
         else:
 
             insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
-
             cur = conn.cursor()
             cur.execute(insertRow,(sdata.url, sdata.description, sdata.expert_estimate,sdata.current_bid, sdata.winning_bid, sdata.image_location, str(datetime.now())))
             cur.close()
