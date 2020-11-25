@@ -58,8 +58,9 @@ def main(args):
         allArticles = []
         for i in range(len(allArticleUrls)):# coz numbering the image with i+1 .
             try:
-                logging.info("for article {0}".format(url))
+
                 url = allArticleUrls[i]
+                logging.info("for article {0}".format(url))
                 driver.get(url)
                 time.sleep(0.2)
                 sdata = ScrapData()
@@ -94,7 +95,7 @@ def main(args):
                 logging.error(e)
 
 
-    #actionForEachArticle(['https://www.catawiki.com/l/42641557-bruichladdich-1991-wmdii-yellow-submarine-lost-found-original-bottling-70cl'], 'dummy')
+    actionForEachArticle(['https://www.catawiki.com/l/29420125-plantation-barbados-2005-perou-2004-jamaica-2005-fiji-2009-b-2018-70cl-4-bottles'], 'dummy')
 
     def eachPageAction(url):
         driver.get(url)
@@ -104,30 +105,30 @@ def main(args):
         return articleUrls
 
     #
-    try:
-        pageResultDiv = driver.find_element_by_class_name("pages")
-        lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
-        lastPageNum = lastPage.text
-        lastPageUrl = str(lastPage.get_attribute("href"))
-
-        pageNum = lastPageUrl.rfind(lastPageNum)
-        pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
-        lastPageNum=int(lastPageNum)
-        #testing
-        #lastPageNum=2 #testing.
-
-        for i in range(1,lastPageNum+1):
-            eachPageUrl = pageUrl+str(i)
-            articleUrls = eachPageAction(eachPageUrl)
-            allArticleUrls.extend(articleUrls)
-
-
-    except NoSuchElementException as e:
-        logging.error(e)
-        articleUrls = eachPageAction(queryURL)
-        allArticleUrls.extend(articleUrls)
-    actionForEachArticle(allArticleUrls, category)
-    driver.close()
+    # try:
+    #     pageResultDiv = driver.find_element_by_class_name("pages")
+    #     lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
+    #     lastPageNum = lastPage.text
+    #     lastPageUrl = str(lastPage.get_attribute("href"))
+    #
+    #     pageNum = lastPageUrl.rfind(lastPageNum)
+    #     pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
+    #     lastPageNum=int(lastPageNum)
+    #     #testing
+    #     #lastPageNum=2 #testing.
+    #
+    #     for i in range(1,lastPageNum+1):
+    #         eachPageUrl = pageUrl+str(i)
+    #         articleUrls = eachPageAction(eachPageUrl)
+    #         allArticleUrls.extend(articleUrls)
+    #
+    #
+    # except NoSuchElementException as e:
+    #     logging.error(e)
+    #     articleUrls = eachPageAction(queryURL)
+    #     allArticleUrls.extend(articleUrls)
+    # actionForEachArticle(allArticleUrls, category)
+    # driver.close()
 
 
 if __name__ == "__main__":
