@@ -54,14 +54,14 @@ def main(args):
     lastPageNum =None
     category = queryURL.split("/")[-1]
 
-    def actionForEachArticle(allArticleUrls, category):
+    def actionForEachArticle(allArticleUrlsTemp, category):
         allArticles = []
-        for i in range(len(allArticleUrls)):# coz numbering the image with i+1 .
+        for i in range(len(allArticleUrlsTemp)):# coz numbering the image with i+1 .
             try:
-                url = allArticleUrls[i]
+                url = allArticleUrlsTemp[i]
                 logging.info("for article {0}".format(url))
                 driver.get(url)
-                time.sleep(0.2)
+                time.sleep(0.5)
                 sdata = ScrapData()
                 sdata.url = url
                 sdata.description = driver.find_element_by_class_name("c-page__heading").text
@@ -91,6 +91,7 @@ def main(args):
                 urllib.request.urlretrieve(picture, sdata.image_location)
                 DataBaseUtils.update(category, sdata)
             except Exception as e:
+                logging.info("error happending while processing an article url {0}".format(allArticleUrlsTemp[i]))
                 logging.error(e)
 
 #testing
@@ -98,9 +99,10 @@ def main(args):
 
     def eachPageAction(url):
         driver.get(url)
-        time.sleep(0.2)
+        time.sleep(0.1)
         articleThumbNails = driver.find_elements_by_xpath("//div//article[@class='c-lot-card__container']/a")
-        articleUrls = map(lambda  x:x.get_attribute("href"),articleThumbNails)
+        articleUrls = list(map(lambda  x:x.get_attribute("href"),articleThumbNails))
+        #logging.info("article ursl of page{0}".format(articleUrls))
         return articleUrls
 
     #
@@ -118,9 +120,9 @@ def main(args):
 
         for i in range(1,lastPageNum+1):
             eachPageUrl = pageUrl+str(i)
+            logging.info("page number {0}".format(i))
             articleUrls = eachPageAction(eachPageUrl)
             allArticleUrls.extend(articleUrls)
-
 
     except NoSuchElementException as e:
         logging.error(e)
@@ -128,7 +130,6 @@ def main(args):
         allArticleUrls.extend(articleUrls)
     actionForEachArticle(allArticleUrls, category)
     driver.close()
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
