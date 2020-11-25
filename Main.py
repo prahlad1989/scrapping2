@@ -58,8 +58,8 @@ def main(args):
         allArticles = []
         for i in range(len(allArticleUrls)):# coz numbering the image with i+1 .
             try:
-                logging.info("for article {0}".format(url))
                 url = allArticleUrls[i]
+                logging.info("for article {0}".format(url))
                 driver.get(url)
                 time.sleep(0.2)
                 sdata = ScrapData()
@@ -93,8 +93,8 @@ def main(args):
             except Exception as e:
                 logging.error(e)
 
-
-    #actionForEachArticle(['https://www.catawiki.com/l/42641557-bruichladdich-1991-wmdii-yellow-submarine-lost-found-original-bottling-70cl'], 'dummy')
+#testing
+    #actionForEachArticle(['https://www.catawiki.com/l/29420125-plantation-barbados-2005-perou-2004-jamaica-2005-fiji-2009-b-2018-70cl-4-bottles'], 'dummy')
 
     def eachPageAction(url):
         driver.get(url)
