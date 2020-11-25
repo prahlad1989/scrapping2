@@ -37,21 +37,21 @@ def createConnection(dbName):
     return conn
 
 
-if __name__ == "__main__":
-    try:
-        conn = createConnection("goodCat")
-        createTable(sql_create_scrap_data, conn)
-        insertRow = "insert into ScrapData(url,description) values({0},{1})".format('abcde','efgh')
-        insertRow=''' INSERT INTO ScrapData(url,description)
-                      VALUES(?,?) '''
-        insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
-        c= conn.cursor()
-        c.execute(insertRow,('accxxc','sdddd','2','3','3',None,datetime.now()))
-        c.close()
-        conn.commit()
-        conn.close()
-    except sqlite3.Error as e:
-        print(e)
+# if __name__ == "__main__":
+#     try:
+#         conn = createConnection("goodCat")
+#         createTable(sql_create_scrap_data, conn)
+#         insertRow = "insert into ScrapData(url,description) values({0},{1})".format('abcde','efgh')
+#         insertRow=''' INSERT INTO ScrapData(url,description)
+#                       VALUES(?,?) '''
+#         insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
+#         c= conn.cursor()
+#         c.execute(insertRow,('accxxc','sdddd','2','3','3',None,datetime.now()))
+#         c.close()
+#         conn.commit()
+#         conn.close()
+#     except sqlite3.Error as e:
+#         print(e)
 
 def update(category, sdata):
     try:
