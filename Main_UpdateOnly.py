@@ -95,7 +95,7 @@ def main(args):
                 logging.error(e)
 
 
-    actionForEachArticle(['https://www.catawiki.com/l/29420125-plantation-barbados-2005-perou-2004-jamaica-2005-fiji-2009-b-2018-70cl-4-bottles'], 'dummy')
+    #actionForEachArticle(['https://www.catawiki.com/l/29420125-plantation-barbados-2005-perou-2004-jamaica-2005-fiji-2009-b-2018-70cl-4-bottles'], 'dummy')
 
     def eachPageAction(url):
         driver.get(url)
@@ -104,31 +104,31 @@ def main(args):
         articleUrls = map(lambda  x:x.get_attribute("href"),articleThumbNails)
         return articleUrls
 
-    #
-    # try:
-    #     pageResultDiv = driver.find_element_by_class_name("pages")
-    #     lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
-    #     lastPageNum = lastPage.text
-    #     lastPageUrl = str(lastPage.get_attribute("href"))
-    #
-    #     pageNum = lastPageUrl.rfind(lastPageNum)
-    #     pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
-    #     lastPageNum=int(lastPageNum)
-    #     #testing
-    #     #lastPageNum=2 #testing.
-    #
-    #     for i in range(1,lastPageNum+1):
-    #         eachPageUrl = pageUrl+str(i)
-    #         articleUrls = eachPageAction(eachPageUrl)
-    #         allArticleUrls.extend(articleUrls)
-    #
-    #
-    # except NoSuchElementException as e:
-    #     logging.error(e)
-    #     articleUrls = eachPageAction(queryURL)
-    #     allArticleUrls.extend(articleUrls)
-    # actionForEachArticle(allArticleUrls, category)
-    # driver.close()
+
+    try:
+        pageResultDiv = driver.find_element_by_class_name("pages")
+        lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
+        lastPageNum = lastPage.text
+        lastPageUrl = str(lastPage.get_attribute("href"))
+
+        pageNum = lastPageUrl.rfind(lastPageNum)
+        pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
+        lastPageNum=int(lastPageNum)
+        #testing
+        #lastPageNum=2 #testing.
+
+        for i in range(1,lastPageNum+1):
+            eachPageUrl = pageUrl+str(i)
+            articleUrls = eachPageAction(eachPageUrl)
+            allArticleUrls.extend(articleUrls)
+
+
+    except NoSuchElementException as e:
+        logging.error(e)
+        articleUrls = eachPageAction(queryURL)
+        allArticleUrls.extend(articleUrls)
+    actionForEachArticle(allArticleUrls, category)
+    driver.close()
 
 
 if __name__ == "__main__":

@@ -73,11 +73,11 @@ def update(category, sdata):
                 cur.execute(updateRow,(sdata.winning_bid, sdata.image_location, id))
                 cur.close()
         else:
-
-            insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
-            cur = conn.cursor()
-            cur.execute(insertRow,(sdata.url, sdata.description, sdata.expert_estimate,sdata.current_bid, sdata.winning_bid, sdata.image_location, str(datetime.now())))
-            cur.close()
+            pass
+            # insertRow = ''' insert into ScrapData(url, description,expert_estimate, current_bid, winning_bid, image_location , updated_at ) values(?,?,?,?,?,?,?) '''
+            # cur = conn.cursor()
+            # cur.execute(insertRow,(sdata.url, sdata.description, sdata.expert_estimate,sdata.current_bid, sdata.winning_bid, sdata.image_location, str(datetime.now())))
+            # cur.close()
 
     except sqlite3.Error as e:
         print(e)
