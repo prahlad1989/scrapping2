@@ -99,7 +99,7 @@ def main(args):
 
     def eachPageAction(url):
         driver.get(url)
-        time.sleep(0.1)
+        time.sleep(0.2)
         articleThumbNails = driver.find_elements_by_xpath("//div//article[@class='c-lot-card__container']/a")
         articleUrls = list(map(lambda  x:x.get_attribute("href"),articleThumbNails))
         #logging.info("article ursl of page{0}".format(articleUrls))

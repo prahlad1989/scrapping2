@@ -53,7 +53,7 @@ def createConnection(dbName):
 #     except sqlite3.Error as e:
 #         print(e)
 
-def update(category, sdata):
+def create(category, sdata):
     try:
         conn = createConnection(category)
         createTable(sql_create_scrap_data, conn)
@@ -72,6 +72,35 @@ def update(category, sdata):
             cur = conn.cursor()
             cur.execute(insertRow,(sdata.url, sdata.description, sdata.expert_estimate,sdata.current_bid, sdata.winning_bid, sdata.image_location, str(datetime.now())))
             cur.close()
+
+    except sqlite3.Error as e:
+        print(e)
+    finally:
+        conn.commit()
+        conn.close()
+
+
+def update(category, sdata):
+    try:
+        conn = createConnection(category)
+        createTable(sql_create_scrap_data, conn)
+        #print(sdata)
+
+        #check if the row exists already. if not , create a row.
+        selectRow =''' select id, winning_bid from ScrapData where url =? '''
+        cur = conn.cursor()
+        cur.execute(selectRow,(sdata.url,))
+        records = cur.fetchall()
+        if(len(records)>0): # record already exists so,
+            id = records[0][0]
+            winning_bid = records[0][1]
+            if winning_bid is None or len(winning_bid.strip()) == 0:
+                updateRow = ''' update ScrapData set winning_bid=?, image_location=? where id=?'''
+                cur = conn.cursor()
+                cur.execute(updateRow,(sdata.winning_bid, sdata.image_location, id))
+                cur.close()
+        else:
+            pass
 
     except sqlite3.Error as e:
         print(e)
