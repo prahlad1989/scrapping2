@@ -29,6 +29,8 @@ import DataBaseUtils
 from ScrapData import ScrapData
 
 
+def updateDataBase(category, sdata):
+    DataBaseUtils.update(category, sdata)
 
 
 def main(args):
@@ -62,7 +64,7 @@ def main(args):
                 url = allArticleUrls[i]
                 logging.info("for article {0}".format(url))
                 driver.get(url)
-                time.sleep(0.2)
+                time.sleep(0.5)
                 sdata = ScrapData()
                 sdata.url = url
                 sdata.description = driver.find_element_by_class_name("c-page__heading").text
@@ -90,7 +92,8 @@ def main(args):
                 pictureName = url.split("/")[-1]
                 sdata.image_location = folderName+"/{0}.{1}".format(pictureName,pictureExt)
                 urllib.request.urlretrieve(picture, sdata.image_location)
-                DataBaseUtils.update(category, sdata)
+                updateDataBase(category,sdata)
+
             except Exception as e:
                 logging.error(e)
 
@@ -103,6 +106,7 @@ def main(args):
         articleThumbNails = driver.find_elements_by_xpath("//div//article[@class='c-lot-card__container']/a")
         articleUrls = map(lambda  x:x.get_attribute("href"),articleThumbNails)
         return articleUrls
+
 
 
     try:
