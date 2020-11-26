@@ -19,9 +19,6 @@ import string
 import argparse
 # pip install urllib3
 import urllib.request
-
-
-
 # pip install selenium
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -36,6 +33,9 @@ def main(args):
     #queryURL = "https://www.catawiki.com/c/873-automobilia-motobilia"
     #queryURL = "https://www.catawiki.com/c/437-whisky/927-area/107557-western-highlands/"
     # open a new google chrome window
+    update_only = False
+    if len(args)>1 and args[1] and args[1]=='update':
+        update_only = True
     driver = webdriver.Chrome()
     driver.set_window_size(1200, 800)
 
@@ -84,12 +84,14 @@ def main(args):
                     # create the folder
                     os.makedirs(folderName)
 
-
                 pictureExt = picture.split(".")[-1]
                 pictureName = url.split("/")[-1]
                 sdata.image_location = folderName+"/{0}.{1}".format(pictureName,pictureExt)
                 urllib.request.urlretrieve(picture, sdata.image_location)
-                DataBaseUtils.update(category, sdata)
+                if update_only:
+                    DataBaseUtils.update(category,sdata)
+                else:
+                    DataBaseUtils.create(category, sdata)
             except Exception as e:
                 logging.info("error happending while processing an article url {0}".format(allArticleUrlsTemp[i]))
                 logging.error(e)
@@ -105,29 +107,36 @@ def main(args):
         #logging.info("article ursl of page{0}".format(articleUrls))
         return articleUrls
 
-    #
-    try:
-        pageResultDiv = driver.find_element_by_class_name("pages")
-        lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
-        lastPageNum = lastPage.text
-        lastPageUrl = str(lastPage.get_attribute("href"))
+    if update_only:
+        allArticleUrls = DataBaseUtils.fetchUrls(category)
+        if not allArticleUrls:
+            logging.info("no existing urls found")
+    else:
+        try:
+            pageResultDiv = driver.find_element_by_class_name("pages")
+            lastPage = pageResultDiv.find_elements_by_tag_name("a")[-1]
+            lastPageNum = lastPage.text
+            lastPageUrl = str(lastPage.get_attribute("href"))
 
-        pageNum = lastPageUrl.rfind(lastPageNum)
-        pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
-        lastPageNum=int(lastPageNum)
-        #testing
-        #lastPageNum=2 #testing.
+            pageNum = lastPageUrl.rfind(lastPageNum)
+            pageUrl = lastPageUrl[0:pageNum]  # truncate page number part so taht it can be used repeatitively
+            lastPageNum=int(lastPageNum)
+            #testing
+            #lastPageNum=2 #testing.
 
-        for i in range(1,lastPageNum+1):
-            eachPageUrl = pageUrl+str(i)
-            logging.info("page number {0}".format(i))
-            articleUrls = eachPageAction(eachPageUrl)
+            for i in range(1,3):
+                eachPageUrl = pageUrl+str(i)
+                logging.info("page number {0}".format(i))
+                articleUrls = eachPageAction(eachPageUrl)
+                allArticleUrls.extend(articleUrls)
+
+        except NoSuchElementException as e:
+            logging.error(e)
+            articleUrls = eachPageAction(queryURL)
             allArticleUrls.extend(articleUrls)
-
-    except NoSuchElementException as e:
-        logging.error(e)
-        articleUrls = eachPageAction(queryURL)
-        allArticleUrls.extend(articleUrls)
+    logging.info(" before removing duplicates length {0}".format(len(allArticleUrls)))
+    allArticleUrls=list(set(allArticleUrls))
+    logging.info(" after removing duplicates length {0}".format(len(allArticleUrls)))
     actionForEachArticle(allArticleUrls, category)
     driver.close()
 

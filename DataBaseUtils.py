@@ -72,6 +72,7 @@ def create(category, sdata):
             cur = conn.cursor()
             cur.execute(insertRow,(sdata.url, sdata.description, sdata.expert_estimate,sdata.current_bid, sdata.winning_bid, sdata.image_location, str(datetime.now())))
             cur.close()
+            logging.info("creaed DB record for {0}".format(sdata.url))
 
     except sqlite3.Error as e:
         print(e)
@@ -79,6 +80,17 @@ def create(category, sdata):
         conn.commit()
         conn.close()
 
+
+
+def fetchUrls(category):
+    conn = createConnection(category)
+    createTable(sql_create_scrap_data, conn)
+    selectRow = ''' select url from ScrapData  '''
+    cur = conn.cursor()
+    cur.execute(selectRow)
+    records = cur.fetchall()
+    urls = list(map(lambda x:x[0], records))
+    return urls
 
 def update(category, sdata):
     try:
@@ -94,11 +106,14 @@ def update(category, sdata):
         if(len(records)>0): # record already exists so,
             id = records[0][0]
             winning_bid = records[0][1]
-            if winning_bid is None or len(winning_bid.strip()) == 0:
+            if  (winning_bid is None or len(winning_bid.strip()) == 0) and sdata.winning_bid is not None:
                 updateRow = ''' update ScrapData set winning_bid=?, image_location=? where id=?'''
                 cur = conn.cursor()
                 cur.execute(updateRow,(sdata.winning_bid, sdata.image_location, id))
+                logging.info("updated winnding bid for {0}".format(sdata.url))
                 cur.close()
+            else:
+                logging.info("Not updated winnding bid for {0}".format(sdata.url))
         else:
             pass
 
