@@ -124,7 +124,7 @@ def main(args):
             #testing
             #lastPageNum=2 #testing.
 
-            for i in range(1,3):
+            for i in range(1,lastPageNum+1):
                 eachPageUrl = pageUrl+str(i)
                 logging.info("page number {0}".format(i))
                 articleUrls = eachPageAction(eachPageUrl)
