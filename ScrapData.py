@@ -8,6 +8,18 @@ class ScrapData:
     image_location = None
     winning_bid = None
 
+    #for wine categories
+    lot_details = None
+    mixed_lot = None
+    type = None
+    vintage = None
+    producer = None
+    num_of_bottles = None
+    bottle_size = None
+    country = None
+
+
+
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)

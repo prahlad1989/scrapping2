@@ -3,8 +3,9 @@ import sys
 # these dont need any installation
 import logging
 
-logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+root = logging.getLogger()
+logging.basicConfig(filename='app.log', filemode='w', format='%(asctime)s %(name)s - %(levelname)s - %(message)s  (line %(lineno)s) ', level=logging.INFO)
+root.addHandler(logging.StreamHandler(sys.stdout))
 
 
 # os is used for doing directory operations
@@ -23,10 +24,10 @@ import urllib.request
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 import DataBaseUtils
-from ScrapData import ScrapData
 
 
 
+wineCategories = ["443-wine"]
 
 def main(args):
     queryURL = args[0]
@@ -61,33 +62,47 @@ def main(args):
                 url = allArticleUrlsTemp[i]
                 logging.info("for article {0}".format(url))
                 driver.get(url)
-                time.sleep(0.5)
-                sdata = ScrapData()
-                sdata.url = url
-                sdata.description = driver.find_element_by_class_name("c-page__heading").text
+                time.sleep(0.2)
+                sdata = dict()
+                sdata['url'] = url
+                sdata['description'] = driver.find_element_by_class_name("c-page__heading").text
                 expertsEstimate = driver.find_elements_by_xpath("//div//*[contains(text(),'s estimate')]")
                 if expertsEstimate:
-                    sdata.expert_estimate = expertsEstimate[0].text.split('estimate')[1].strip()
+                    sdata['expert_estimate'] = expertsEstimate[0].text.split('estimate')[1].strip()
 
-                currentBid = driver.find_elements_by_xpath("//div[@class='be-lot-current-bid']//div//*[contains(text(),'Current bid ')]")
+                currentBid = driver.find_elements_by_xpath("//div[@class='be-lot-current-bid']//div//*[contains(text(),'Current bid')]")
                 if currentBid:
-                    sdata.current_bid =  currentBid[0].text.replace("Current bid ","")
+                    sdata['current_bid'] =  currentBid[0].text.replace("Current bid ","")
 
                 picture = driver.find_elements_by_xpath("//div[@class='be-lot-image-gallery__image']/img")[0].get_attribute("src")
 
                 winningBid = driver.find_elements_by_xpath("//div[@class='lot-closed-banner__lot-winning-bid']")
                 if winningBid:
-                    sdata.winning_bid = winningBid[0].text.replace("Winning Bid:","")
+                    sdata['winning_bid'] = winningBid[0].text.replace("Winning Bid:","")
 
                 folderName = "databases/categories/{0}/images".format(category)
+
+                if category in wineCategories:
+                    #lotDetailsButton = driver.find_elements_by_xpath("//button[@class='be-accordion__button' ]")[0].click()
+                    for x in driver.find_elements_by_xpath("//section[@id='specifications']//button[@class='be-accordion__button' ]"):
+                        child = x.find_elements_by_xpath("./child::*")[0]
+                        if child.get_attribute("class") == 'be-accordion__header':
+                            x.click()
+                            time.sleep(5)
+
+                    for x in  driver.find_elements_by_xpath("//div[@class ='be-lot-specification']"):
+                        children = x.find_elements_by_xpath("./child::*")
+                        sdata["{0}".format(children[0].text)] = children[1].text
+                        #logging.info(sdata[children[0].text])
+
                 if not os.path.exists(folderName):
                     # create the folder
                     os.makedirs(folderName)
 
                 pictureExt = picture.split(".")[-1]
                 pictureName = url.split("/")[-1]
-                sdata.image_location = folderName+"/{0}.{1}".format(pictureName,pictureExt)
-                urllib.request.urlretrieve(picture, sdata.image_location)
+                sdata['image_location'] = folderName+"/{0}.{1}".format(pictureName,pictureExt)
+                urllib.request.urlretrieve(picture, sdata['image_location'])
                 if update_only:
                     DataBaseUtils.update(category,sdata)
                 else:
@@ -97,7 +112,7 @@ def main(args):
                 logging.error(e)
 
 #testing
-    #actionForEachArticle(['https://www.catawiki.com/l/29420125-plantation-barbados-2005-perou-2004-jamaica-2005-fiji-2009-b-2018-70cl-4-bottles'], 'dummy')
+    #actionForEachArticle([ 'https://www.catawiki.com/l/43028841-2019-grattamacco-rosso-bolgheri-6-bottles-0-75l'], "443-wine")
 
     def eachPageAction(url):
         driver.get(url)
@@ -106,7 +121,7 @@ def main(args):
         articleUrls = list(map(lambda  x:x.get_attribute("href"),articleThumbNails))
         #logging.info("article ursl of page{0}".format(articleUrls))
         return articleUrls
-
+    #
     if update_only:
         allArticleUrls = DataBaseUtils.fetchUrls(category)
         if not allArticleUrls:
